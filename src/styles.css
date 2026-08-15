@@ -1884,53 +1884,74 @@ h1 span {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  /* ---- Disable heavy 3D effects on tablet ---- */
+  /* ---- Fix mobile/tablet: scroll + animations ---- */
+
+  /* Remove 3D and will-change from main to fix touch scrolling */
+  main {
+    transform-style: flat;
+    will-change: auto;
+    perspective: none;
+    background: none;
+  }
+
+  /* Sections: remove overflow clip, remove perspective, keep animations */
   .page {
     overflow: visible;
+    perspective: none;
+    filter: none;
+    opacity: 0;
+    transform: translateY(40px);
+    transition:
+      opacity 0.7s ease,
+      transform 0.8s cubic-bezier(0.18, 0.84, 0.28, 1);
   }
 
-  /* Keep fade + simple translateY, remove rotateX/Y/Z */
+  /* Override all data-motion to simple slide-up */
   .page[data-motion="flip"],
   .page[data-motion="tilt"],
-  .page[data-motion="turn"] {
-    transform: translateY(50px) scale(0.98);
-  }
-
+  .page[data-motion="turn"],
   .page[data-motion="lift"],
   .page[data-motion="store"] {
-    transform: translateY(60px) scale(0.97);
+    transform: translateY(40px);
   }
 
   .page.is-visible {
-    transform: translateY(0) scale(1);
+    opacity: 1;
+    transform: translateY(0);
+    filter: none;
   }
 
   /* Disable scene-shift animation on tablet/mobile */
-  main.scene-shift {
-    animation: none !important;
-    pointer-events: auto;
-  }
-
+  main.scene-shift,
   main.scene-shift.flip,
   main.scene-shift.tilt,
   main.scene-shift.lift,
   main.scene-shift.turn,
   main.scene-shift.store {
     animation: none !important;
+    pointer-events: auto;
   }
 
   /* Disable transition overlay on tablet/mobile */
+  .transition-stage,
   .transition-stage.active {
-    opacity: 0 !important;
+    display: none !important;
   }
 
   /* Disable parallax on touch */
   .home-photo {
     transform: none;
+    transition: none;
+  }
+
+  .home-content {
+    transform: none;
+    transition: none;
   }
 
   .portrait-frame {
     transform: none !important;
+    transition: none;
   }
 
   /* Disable cursor aura on touch */
