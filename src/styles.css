@@ -23,6 +23,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -30,6 +31,8 @@ body {
   background: var(--black);
   font-family: "Montserrat", "Gotham", "Avenir Next", "Segoe UI", sans-serif;
   cursor: default;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 a {
@@ -530,10 +533,11 @@ h1 {
   margin-bottom: 12px;
   display: grid;
   gap: 8px;
-  font-size: clamp(3.4rem, 8.4vw, 8.2rem);
+  font-size: clamp(2.4rem, 8.4vw, 8.2rem);
   font-weight: 900;
   line-height: 0.78;
   letter-spacing: 0;
+  word-break: break-word;
 }
 
 h1 small {
@@ -662,9 +666,10 @@ h1 span {
 .section-title h2,
 .contact-box h2 {
   margin-bottom: 22px;
-  font-size: clamp(2.3rem, 6vw, 5.8rem);
+  font-size: clamp(1.8rem, 6vw, 5.8rem);
   line-height: 0.94;
   font-weight: 950;
+  word-break: break-word;
 }
 
 .about-text a {
