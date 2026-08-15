@@ -76,7 +76,7 @@ main.scene-shift.store {
   position: relative;
   min-height: 100vh;
   overflow: hidden;
-  scroll-margin-top: 0;
+  scroll-margin-top: 72px;
   opacity: 0.001;
   transform: translateY(70px) rotateX(0deg);
   transform-origin: center top;
@@ -459,6 +459,49 @@ main.scene-shift.store {
   transform: translateY(-1px) scale(1.04);
   border-color: rgba(121, 170, 255, 0.72);
   color: var(--blue);
+}
+
+/* Hamburger — hidden on desktop */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: border-color 0.22s ease;
+}
+
+.hamburger:hover {
+  border-color: rgba(121, 170, 255, 0.72);
+}
+
+.hamburger span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: white;
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Hamburger open state */
+.nav.menu-open .hamburger span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.nav.menu-open .hamburger span:nth-child(2) {
+  opacity: 0;
+}
+
+.nav.menu-open .hamburger span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
 }
 
 .home-page {
@@ -1840,49 +1883,136 @@ h1 span {
   .contact-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  /* ---- Disable heavy 3D effects on tablet ---- */
+  .page {
+    overflow: visible;
+  }
+
+  /* Keep fade + simple translateY, remove rotateX/Y/Z */
+  .page[data-motion="flip"],
+  .page[data-motion="tilt"],
+  .page[data-motion="turn"] {
+    transform: translateY(50px) scale(0.98);
+  }
+
+  .page[data-motion="lift"],
+  .page[data-motion="store"] {
+    transform: translateY(60px) scale(0.97);
+  }
+
+  .page.is-visible {
+    transform: translateY(0) scale(1);
+  }
+
+  /* Disable scene-shift animation on tablet/mobile */
+  main.scene-shift {
+    animation: none !important;
+    pointer-events: auto;
+  }
+
+  main.scene-shift.flip,
+  main.scene-shift.tilt,
+  main.scene-shift.lift,
+  main.scene-shift.turn,
+  main.scene-shift.store {
+    animation: none !important;
+  }
+
+  /* Disable transition overlay on tablet/mobile */
+  .transition-stage.active {
+    opacity: 0 !important;
+  }
+
+  /* Disable parallax on touch */
+  .home-photo {
+    transform: none;
+  }
+
+  .portrait-frame {
+    transform: none !important;
+  }
+
+  /* Disable cursor aura on touch */
+  .cursor-aura {
+    display: none;
+  }
 }
 
 /* =============================================
    MOBILE — max 640px
    ============================================= */
 @media (max-width: 640px) {
-  /* NAV — hamburger style compact */
+  /* NAV — hamburger dropdown */
   .nav {
     top: 10px;
     padding: 10px 14px;
     border-radius: 16px;
     gap: 10px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
 
   .brand {
     font-size: 1rem;
   }
 
-  .nav-links {
-    order: 3;
-    width: 100%;
+  /* Show hamburger on mobile */
+  .hamburger {
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px 10px;
-    justify-content: center;
-    padding: 8px 0 4px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-left: auto;
+  }
+
+  /* Nav links: hidden dropdown */
+  .nav-links {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 12px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 14px;
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04)),
+      rgba(8, 10, 12, 0.92);
+    backdrop-filter: blur(22px) saturate(1.35);
+    -webkit-backdrop-filter: blur(22px) saturate(1.35);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+    pointer-events: none;
+  }
+
+  .nav-links.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
   }
 
   .nav-links a {
-    font-size: 0.78rem;
-    padding: 4px 8px;
-    min-height: 28px;
+    font-size: 0.88rem;
+    padding: 10px 14px;
+    min-height: 38px;
+    border-radius: 10px;
+    transition: background 0.2s ease, color 0.2s ease;
   }
 
-  /* Masquer la bulle active sur mobile (trop complexe) */
+  .nav-links a:hover,
+  .nav-links a.active {
+    background: rgba(121, 170, 255, 0.12);
+  }
+
+  /* Hide bubble on mobile */
   .nav-links::before {
     display: none;
   }
 
   .lang-toggle {
-    margin-left: auto;
     height: 30px;
     min-width: 38px;
     font-size: 0.72rem;

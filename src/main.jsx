@@ -280,6 +280,7 @@ function LiveProjectPreview({ project, domain }) {
 function Nav({ onNavigate, activeHref, lang, onToggleLang, t }) {
   const linksRef = useRef(null);
   const [bubble, setBubble] = useState({ left: 0, width: 78, ready: false });
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const moveBubble = (target) => {
     const container = linksRef.current;
@@ -299,11 +300,27 @@ function Nav({ onNavigate, activeHref, lang, onToggleLang, t }) {
     if (active) moveBubble(active);
   }, [activeHref]);
 
+  const handleLinkClick = (event, href, motion) => {
+    setMenuOpen(false);
+    onNavigate(event, href, motion);
+  };
+
   return (
-    <header className="nav">
-      <a className="brand" href="#home" onClick={(event) => onNavigate(event, "#home", "flip")}>KJB</a>
+    <header className={`nav ${menuOpen ? "menu-open" : ""}`}>
+      <a className="brand" href="#home" onClick={(event) => handleLinkClick(event, "#home", "flip")}>KJB</a>
+      <button
+        className="hamburger"
+        type="button"
+        onClick={() => setMenuOpen((prev) => !prev)}
+        aria-label="Toggle menu"
+        aria-expanded={menuOpen}
+      >
+        <span />
+        <span />
+        <span />
+      </button>
       <nav
-        className={`nav-links ${bubble.ready ? "ready" : ""}`}
+        className={`nav-links ${bubble.ready ? "ready" : ""} ${menuOpen ? "open" : ""}`}
         aria-label="Navigation principale"
         ref={linksRef}
         style={{ "--bubble-left": `${bubble.left}px`, "--bubble-width": `${bubble.width}px` }}
@@ -319,7 +336,7 @@ function Nav({ onNavigate, activeHref, lang, onToggleLang, t }) {
             className={activeHref === href ? "active" : ""}
             onMouseEnter={(event) => moveBubble(event.currentTarget)}
             onFocus={(event) => moveBubble(event.currentTarget)}
-            onClick={(event) => onNavigate(event, href, motion)}
+            onClick={(event) => handleLinkClick(event, href, motion)}
           >
             {t.nav[key]}
           </a>
@@ -650,59 +667,7 @@ function App() {
     }, isTouch ? 50 : 620);
   };
 
-  useEffect(() => {
-    const ids = navItems.map(([, href]) => href.replace("#", ""));
-    const motionsById = Object.fromEntries(navItems.map(([, href, motion]) => [href.replace("#", ""), motion]));
-
-    // Désactiver le wheel hijack sur mobile/tactile (scroll natif)
-    const isTouch = window.matchMedia("(pointer: coarse)").matches;
-
-    const navigateToIndex = (nextIndex, currentIndex) => {
-      if (nextIndex === currentIndex) return;
-      const nextId = ids[nextIndex];
-      const motion = motionsById[nextId] || "lift";
-      activeSectionRef.current = nextId;
-      setActiveHref(`#${nextId}`);
-      scrollTransitionUntilRef.current = Date.now() + 2200;
-      clickTransitionUntilRef.current = Date.now() + 2200;
-      playTransition(motion);
-      window.setTimeout(() => {
-        document.getElementById(nextId)?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 620);
-    };
-
-    // --- Wheel (souris / trackpad desktop) ---
-    const handleWheel = (event) => {
-      if (isTouch) return;
-      if (Math.abs(event.deltaY) < 18 || Date.now() < scrollTransitionUntilRef.current) {
-        return;
-      }
-
-      const currentId = activeSectionRef.current;
-      const currentSection = document.getElementById(currentId);
-      if (currentSection) {
-        const rect = currentSection.getBoundingClientRect();
-        const canScrollInsideDown = event.deltaY > 0 && rect.bottom > window.innerHeight + 40;
-        const canScrollInsideUp = event.deltaY < 0 && rect.top < -40;
-        if (canScrollInsideDown || canScrollInsideUp) {
-          return;
-        }
-      }
-
-      const currentIndex = Math.max(0, ids.indexOf(activeSectionRef.current));
-      const nextIndex = event.deltaY > 0
-        ? Math.min(ids.length - 1, currentIndex + 1)
-        : Math.max(0, currentIndex - 1);
-
-      event.preventDefault();
-      navigateToIndex(nextIndex, currentIndex);
-    };
-
-    window.addEventListener("wheel", handleWheel, { passive: false });
-    return () => {
-      window.removeEventListener("wheel", handleWheel);
-    };
-  }, []);
+  // Wheel hijack supprimé : scroll natif partout (desktop + mobile)
 
   return (
     <>
@@ -714,14 +679,14 @@ function App() {
         <span />
         <span />
       </div>
-      <main className={transition ? `scene-shift ${transition}` : ""}>
-        <Nav
+      <Nav
           onNavigate={handleNavigate}
           activeHref={activeHref}
           lang={lang}
           onToggleLang={() => setLang((current) => (current === "fr" ? "en" : "fr"))}
           t={t}
         />
+      <main className={transition ? `scene-shift ${transition}` : ""}>
         <Home t={t} />
         <About t={t} />
         <Realisations onOpenProjects={() => setProjectsOpen(true)} t={t} />
