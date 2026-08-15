@@ -614,8 +614,13 @@ function App() {
             ) {
               activeSectionRef.current = sectionId;
               setActiveHref(`#${sectionId}`);
-              scrollTransitionUntilRef.current = Date.now() + 2050;
-              playTransition(motion);
+              
+              // Ne pas jouer la transition 3D sur mobile/tablette
+              const isTouch = window.matchMedia("(pointer: coarse)").matches || window.innerWidth <= 900;
+              if (!isTouch) {
+                scrollTransitionUntilRef.current = Date.now() + 2050;
+                playTransition(motion);
+              }
             }
           }
         });
@@ -634,10 +639,15 @@ function App() {
     scrollTransitionUntilRef.current = Date.now() + lockDuration;
     activeSectionRef.current = href.replace("#", "");
     setActiveHref(href);
-    playTransition(motion);
+    
+    const isTouch = window.matchMedia("(pointer: coarse)").matches || window.innerWidth <= 900;
+    if (!isTouch) {
+      playTransition(motion);
+    }
+    
     window.setTimeout(() => {
       document.querySelector(href)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 620);
+    }, isTouch ? 50 : 620);
   };
 
   useEffect(() => {
@@ -688,40 +698,9 @@ function App() {
       navigateToIndex(nextIndex, currentIndex);
     };
 
-    // --- Swipe tactile (mobile) ---
-    let touchStartY = 0;
-    let touchStartX = 0;
-    const handleTouchStart = (event) => {
-      touchStartY = event.touches[0].clientY;
-      touchStartX = event.touches[0].clientX;
-    };
-
-    const handleTouchEnd = (event) => {
-      if (!isTouch) return;
-      if (Date.now() < scrollTransitionUntilRef.current) return;
-      const deltaY = touchStartY - event.changedTouches[0].clientY;
-      const deltaX = Math.abs(touchStartX - event.changedTouches[0].clientX);
-      // Ignorer les swipes horizontaux
-      if (deltaX > Math.abs(deltaY) * 0.8) return;
-      // Minimum 60px de swipe vertical
-      if (Math.abs(deltaY) < 60) return;
-
-      const currentId = activeSectionRef.current;
-      const currentIndex = Math.max(0, ids.indexOf(currentId));
-      const nextIndex = deltaY > 0
-        ? Math.min(ids.length - 1, currentIndex + 1)
-        : Math.max(0, currentIndex - 1);
-
-      navigateToIndex(nextIndex, currentIndex);
-    };
-
     window.addEventListener("wheel", handleWheel, { passive: false });
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchend", handleTouchEnd, { passive: true });
     return () => {
       window.removeEventListener("wheel", handleWheel);
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchend", handleTouchEnd);
     };
   }, []);
 
