@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#07111f"/>
+      <stop offset="1" stop-color="#14213d"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" x2="1">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="760" rx="34" fill="url(#bg)"/>
+  <rect x="70" y="54" width="1060" height="82" rx="18" fill="rgba(255,255,255,.10)"/>
+  <rect x="112" y="84" width="188" height="26" rx="13" fill="#fff" opacity=".9"/>
+  <rect x="880" y="82" width="180" height="30" rx="15" fill="url(#accent)"/>
+  <g transform="translate(92 174)">
+    <rect width="1016" height="408" rx="28" fill="#f7fbff"/>
+    <rect x="0" y="0" width="238" height="408" rx="28" fill="#0f172a"/>
+    <rect x="36" y="48" width="146" height="22" rx="11" fill="#fff" opacity=".86"/>
+    <rect x="36" y="116" width="164" height="38" rx="14" fill="#1d4ed8"/>
+    <rect x="36" y="176" width="132" height="16" rx="8" fill="#fff" opacity=".45"/>
+    <rect x="36" y="220" width="154" height="16" rx="8" fill="#fff" opacity=".45"/>
+    <rect x="294" y="48" width="298" height="42" rx="16" fill="#0f172a"/>
+    <rect x="294" y="128" width="300" height="110" rx="22" fill="#dbeafe"/>
+    <rect x="636" y="128" width="300" height="110" rx="22" fill="#dcfce7"/>
+    <rect x="294" y="278" width="642" height="70" rx="22" fill="#e5e7eb"/>
+    <circle cx="840" cy="76" r="34" fill="url(#accent)"/>
+  </g>
+  <text x="72" y="664" fill="#ffffff" font-family="Montserrat, Arial" font-size="54" font-weight="800">Centre Gestion</text>
+  <text x="72" y="712" fill="#d8dce5" font-family="Montserrat, Arial" font-size="26">Centre de sante - PWA</text>
+</svg>
