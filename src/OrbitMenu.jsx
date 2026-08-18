@@ -126,8 +126,8 @@ export default function OrbitMenu({ open, cards, onSelect, onLearnMore, t }) {
         </span>
       </div>
 
-      <button type="button" className="hub-learn" onClick={onLearnMore}>
-        <span className="hub-learn-shine" />
+      <button type="button" className="liquid-button hub-learn" onClick={onLearnMore}>
+        <span className="shine" />
         <span>{t.hubLearn}</span>
       </button>
 
