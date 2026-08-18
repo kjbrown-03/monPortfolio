@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowUpRight,
@@ -17,10 +17,7 @@ import {
 } from "lucide-react";
 import "./styles.css";
 import { navItems } from "./navItems.js";
-
-// Three.js is heavy — only fetch it once the splash finishes and the hub is
-// actually about to be shown, not in the initial bundle.
-const DodecahedronMenu = lazy(() => import("./DodecahedronMenu.jsx"));
+import OrbitMenu from "./OrbitMenu.jsx";
 
 const homeImage =
   "/images/home-bg.png";
@@ -787,12 +784,45 @@ function App() {
   const [lang, setLang] = useState("fr");
   const [activeIndex, setActiveIndex] = useState(0);
   const [showHub, setShowHub] = useState(false);
-  const [hubEverShown, setHubEverShown] = useState(false);
   const t = copy[lang];
 
-  useEffect(() => {
-    if (showHub) setHubEverShown(true);
-  }, [showHub]);
+  const hubCards = [
+    {
+      key: "home",
+      href: "#home",
+      title: t.nav.home,
+      excerpt: `${t.heroEyebrow} — ${t.heroRole}`,
+      image: homeImage,
+    },
+    {
+      key: "about",
+      href: "#about",
+      title: t.nav.about,
+      excerpt: t.aboutBody.length > 110 ? `${t.aboutBody.slice(0, 110).trim()}…` : t.aboutBody,
+      image: portraitImage,
+    },
+    {
+      key: "work",
+      href: "#realisations",
+      title: t.nav.work,
+      excerpt: `${projects[0].title} — ${projects[0].subtitle}`,
+      image: projects[0].image,
+    },
+    {
+      key: "resume",
+      href: "#resume",
+      title: t.nav.resume,
+      excerpt: skills.slice(0, 4).map(([name]) => name).join(" · "),
+      image: null,
+    },
+    {
+      key: "contact",
+      href: "#contact",
+      title: t.nav.contact,
+      excerpt: "kaldjobbaptiste03@gmail.com · +237 693 904 197",
+      image: null,
+    },
+  ];
 
   const handleSplashFinished = () => {
     setHideSplash(true);
@@ -867,11 +897,7 @@ function App() {
   return (
     <>
       {showSplash && <SplashScreen hidden={hideSplash} onFinish={handleSplashFinished} t={t} />}
-      {hubEverShown && (
-        <Suspense fallback={null}>
-          <DodecahedronMenu open={showHub} onSelect={handleHubSelect} t={t} />
-        </Suspense>
-      )}
+      <OrbitMenu open={showHub} cards={hubCards} onSelect={handleHubSelect} t={t} />
       <div className="cursor-aura" aria-hidden="true" />
       <Nav
           onNavigate={handleNavigate}
