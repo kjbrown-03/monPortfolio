@@ -1,12 +1,19 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowUpRight,
+  Briefcase,
+  FileText,
+  Home as HomeIcon,
   Mail,
   MapPin,
+  MessageCircle,
   Phone,
+  Send,
   ShieldCheck,
   Terminal,
+  User as UserIcon,
+  X,
 } from "lucide-react";
 import "./styles.css";
 
@@ -15,11 +22,11 @@ const homeImage =
 const portraitImage = "/images/about-whatsapp-cutout.png";
 
 const navItems = [
-  ["home", "#home", "flip"],
-  ["about", "#about", "tilt"],
-  ["work", "#realisations", "lift"],
-  ["resume", "#resume", "turn"],
-  ["contact", "#contact", "store"],
+  ["home", "#home"],
+  ["about", "#about"],
+  ["work", "#realisations"],
+  ["resume", "#resume"],
+  ["contact", "#contact"],
 ];
 
 const copy = {
@@ -56,6 +63,15 @@ const copy = {
       "Disponible pour concevoir des plateformes web, dashboards, applications metier et integrations backend. Voici mes contacts directs.",
     emailAction: "Envoyer un mail",
     callAction: "Appeler",
+    whatsappAction: "WhatsApp",
+    whatsappMessage: "Bonjour Jean Baptiste, je vous contacte depuis votre portfolio.",
+    chatTitle: "Assistant IA",
+    chatSubtitle: "Pose une question sur mon parcours",
+    chatGreeting:
+      "Bonjour ! Je suis l'assistant IA de Jean Baptiste. Pose-moi une question sur son parcours, ses competences ou ses projets.",
+    chatPlaceholder: "Ecris ta question...",
+    chatError: "Desole, une erreur est survenue. Reessaie dans un instant.",
+    chatSend: "Envoyer",
   },
   en: {
     langLabel: "FR",
@@ -90,6 +106,15 @@ const copy = {
       "Available to design web platforms, dashboards, business applications and backend integrations. Here are my direct contacts.",
     emailAction: "Send email",
     callAction: "Call",
+    whatsappAction: "WhatsApp",
+    whatsappMessage: "Hello Jean Baptiste, I'm reaching out from your portfolio.",
+    chatTitle: "AI Assistant",
+    chatSubtitle: "Ask about my background",
+    chatGreeting:
+      "Hi! I'm Jean Baptiste's AI assistant. Ask me about his background, skills or projects.",
+    chatPlaceholder: "Type your question...",
+    chatError: "Sorry, something went wrong. Please try again in a moment.",
+    chatSend: "Send",
   },
 };
 
@@ -138,74 +163,90 @@ const skills = [
   ["Supabase", 80],
 ];
 
-const glyphDots = [
-  [0, -62], [16, -58], [32, -50], [48, -36], [58, -18], [62, 0], [58, 18], [48, 36], [32, 50], [16, 58],
-  [0, 62], [-16, 58], [-32, 50], [-48, 36], [-58, 18], [-62, 0], [-58, -18], [-48, -36], [-32, -50], [-16, -58],
-  [-44, -34], [-44, -22], [-44, -10], [-44, 2], [-44, 14], [-44, 26], [-44, 38],
-  [-32, -6], [-24, -18], [-16, -30], [-24, 8], [-16, 22], [-8, 36],
-  [6, -34], [18, -34], [30, -34], [30, -22], [30, -10], [30, 2], [30, 14], [24, 26], [12, 38], [0, 38],
-  [46, -34], [46, -22], [46, -10], [46, 2], [46, 14], [46, 26], [46, 38],
-  [58, -34], [70, -30], [74, -18], [70, -6], [58, -2],
-  [62, 2], [76, 8], [80, 22], [76, 34], [62, 38],
-  [-52, -34], [-52, 38], [-36, -34], [-28, 34], [-4, -34], [10, -34],
-  [16, 38], [34, 38], [52, -2], [68, -2], [52, 38], [68, 38],
-];
+const NAME_TRAVEL_MS = 1700;
+const BAR_FILL_MS = 2400;
 
-const splashParticles = Array.from({ length: 84 }, (_, index) => {
-  const dot = glyphDots[index % glyphDots.length];
-  const side = index % 4;
-  const spread = ((index * 37) % 100) - 50;
-  const from =
-    side === 0
-      ? [-54, spread]
-      : side === 1
-        ? [54, spread]
-        : side === 2
-          ? [spread, -54]
-          : [spread, 54];
+function SplashScreen({ hidden, onFinish, t }) {
+  // enter (off-screen) -> centering (words travel in) -> loading (bar+text
+  // show, words hold center) -> exit (words leave AND bar+text disappear at
+  // the same instant).
+  const [phase, setPhase] = useState("enter");
+  const [overlap, setOverlap] = useState(0);
+  const jeanRef = useRef(null);
 
-  return {
-    fromX: `${from[0]}vw`,
-    fromY: `${from[1]}vh`,
-    toX: `${dot[0]}px`,
-    toY: `${dot[1]}px`,
-    delay: `${(index % 28) * 0.08}s`,
-    size: `${2 + (index % 4)}px`,
-  };
-});
+  // Mesure la largeur reelle de "Jean" pour que le B de Baptiste vienne
+  // s'arreter pile sur son "e" (~30% de la largeur du mot), quel que soit
+  // l'ecran / la taille de police (responsive).
+  useLayoutEffect(() => {
+    const measure = () => {
+      if (jeanRef.current) setOverlap(jeanRef.current.offsetWidth * 0.7);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
 
-function SplashScreen({ hidden, t }) {
+  useEffect(() => {
+    const toCentering = window.setTimeout(() => setPhase("centering"), 80);
+    return () => window.clearTimeout(toCentering);
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "centering") return;
+    const toLoading = window.setTimeout(() => setPhase("loading"), NAME_TRAVEL_MS);
+    return () => window.clearTimeout(toLoading);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "loading") return;
+    const toExit = window.setTimeout(() => setPhase("exit"), BAR_FILL_MS);
+    return () => window.clearTimeout(toExit);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "exit") return;
+    const toFinish = window.setTimeout(() => onFinish(), NAME_TRAVEL_MS);
+    return () => window.clearTimeout(toFinish);
+  }, [phase, onFinish]);
+
+  const centered = phase === "centering" || phase === "loading";
+  const barActive = phase === "loading";
+
   return (
     <div className={`splash ${hidden ? "splash-hidden" : ""}`}>
-      <div className="splash-particles" aria-hidden="true">
-        {splashParticles.map((particle, index) => (
-          <span
-            key={index}
-            style={{
-              "--from-x": particle.fromX,
-              "--from-y": particle.fromY,
-              "--to-x": particle.toX,
-              "--to-y": particle.toY,
-              "--particle-delay": particle.delay,
-              "--particle-size": particle.size,
-            }}
-          />
-        ))}
+      <div
+        className={`splash-names ${centered ? "centered" : ""}`}
+        aria-hidden="true"
+        style={{ "--overlap": `${overlap}px` }}
+      >
+        <span className="splash-name splash-name-jean" ref={jeanRef}>Jean</span>
+        <span className="splash-name splash-name-baptiste">Baptiste</span>
       </div>
-      <div className="splash-circle">
-        <span>KJB</span>
-      </div>
-      <div className="splash-line">
+      <div className={`splash-loadbar ${barActive ? "active" : ""}`}>
         <i />
       </div>
-      <p>{t.splash}</p>
+      <p className={barActive ? "visible" : ""}>{t.splash}</p>
     </div>
   );
 }
 
-function LiquidButton({ href, children, light = false }) {
+function WhatsAppIcon({ size = 18 }) {
   return (
-    <a href={href} className={`liquid-button ${light ? "light" : ""}`}>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.65-2.05-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.6-.91-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.87 1.22 3.07c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.62.71.23 1.36.2 1.87.12.57-.08 1.76-.72 2.01-1.42.25-.7.25-1.29.17-1.42-.07-.13-.27-.2-.57-.35z" />
+      <path d="M12.04 2C6.58 2 2.13 6.44 2.13 11.9c0 1.88.51 3.63 1.4 5.14L2 22l5.13-1.5a9.9 9.9 0 0 0 4.9 1.28h.01c5.46 0 9.9-4.44 9.9-9.9C21.94 6.44 17.5 2 12.04 2zm0 18.02h-.01a8.1 8.1 0 0 1-4.14-1.13l-.3-.18-3.05.89.9-2.98-.19-.31a8.13 8.13 0 0 1-1.24-4.4c0-4.5 3.66-8.15 8.16-8.15a8.1 8.1 0 0 1 5.76 2.39 8.09 8.09 0 0 1 2.39 5.76c0 4.5-3.66 8.15-8.28 8.11z" />
+    </svg>
+  );
+}
+
+function LiquidButton({ href, children, light = false, external = false }) {
+  return (
+    <a
+      href={href}
+      className={`liquid-button ${light ? "light" : ""}`}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noreferrer" : undefined}
+    >
       <span className="shine" />
       <span>{children}</span>
     </a>
@@ -300,14 +341,14 @@ function Nav({ onNavigate, activeHref, lang, onToggleLang, t }) {
     if (active) moveBubble(active);
   }, [activeHref]);
 
-  const handleLinkClick = (event, href, motion) => {
+  const handleLinkClick = (event, href) => {
     setMenuOpen(false);
-    onNavigate(event, href, motion);
+    onNavigate(event, href);
   };
 
   return (
     <header className={`nav ${menuOpen ? "menu-open" : ""}`}>
-      <a className="brand" href="#home" onClick={(event) => handleLinkClick(event, "#home", "flip")}>KJB</a>
+      <a className="brand" href="#home" onClick={(event) => handleLinkClick(event, "#home")}>KJB</a>
       <button
         className="hamburger"
         type="button"
@@ -329,14 +370,14 @@ function Nav({ onNavigate, activeHref, lang, onToggleLang, t }) {
           if (active) moveBubble(active);
         }}
       >
-        {navItems.map(([key, href, motion]) => (
+        {navItems.map(([key, href]) => (
           <a
             key={key}
             href={href}
             className={activeHref === href ? "active" : ""}
             onMouseEnter={(event) => moveBubble(event.currentTarget)}
             onFocus={(event) => moveBubble(event.currentTarget)}
-            onClick={(event) => handleLinkClick(event, href, motion)}
+            onClick={(event) => handleLinkClick(event, href)}
           >
             {t.nav[key]}
           </a>
@@ -353,9 +394,14 @@ function Nav({ onNavigate, activeHref, lang, onToggleLang, t }) {
   );
 }
 
-function Home({ t }) {
+function Home({ t, slide = 0 }) {
   return (
-    <section id="home" className="page home-page">
+    <section
+      id="home"
+      className="page home-page"
+      style={{ "--slide": slide }}
+      data-active={slide === 0}
+    >
       <img className="home-photo" src={homeImage} alt="Bureau de travail sombre avec ordinateur" />
       <div className="home-content">
         <p className="eyebrow">{t.heroEyebrow}</p>
@@ -378,9 +424,14 @@ function Home({ t }) {
   );
 }
 
-function About({ t }) {
+function About({ t, slide = 0 }) {
   return (
-    <section id="about" className="page about-page">
+    <section
+      id="about"
+      className="page about-page"
+      style={{ "--slide": slide }}
+      data-active={slide === 0}
+    >
       <div className="about-content">
         <div className="about-text">
           <p className="eyebrow dark">{t.aboutEyebrow}</p>
@@ -400,9 +451,14 @@ function About({ t }) {
   );
 }
 
-function Realisations({ onOpenProjects, t }) {
+function Realisations({ onOpenProjects, t, slide = 0 }) {
   return (
-    <section id="realisations" className="page work-page">
+    <section
+      id="realisations"
+      className="page work-page"
+      style={{ "--slide": slide }}
+      data-active={slide === 0}
+    >
       <div className="section-title">
         <p className="eyebrow">{t.portfolioEyebrow}</p>
         <h2>{t.workTitle}</h2>
@@ -422,9 +478,14 @@ function Realisations({ onOpenProjects, t }) {
   );
 }
 
-function Resume({ t }) {
+function Resume({ t, slide = 0 }) {
   return (
-    <section id="resume" className="page resume-page">
+    <section
+      id="resume"
+      className="page resume-page"
+      style={{ "--slide": slide }}
+      data-active={slide === 0}
+    >
       <div className="resume-grid">
         <div>
           <h2>{t.skillsTitle}</h2>
@@ -465,7 +526,10 @@ function Resume({ t }) {
   );
 }
 
-function Contact({ t }) {
+const WHATSAPP_NUMBER = "237693904197";
+const whatsappLink = (message) => `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+
+function Contact({ t, slide = 0 }) {
   const contacts = [
     {
       icon: <Mail size={18} />,
@@ -480,6 +544,12 @@ function Contact({ t }) {
       href: "tel:+237693904197",
     },
     {
+      icon: <WhatsAppIcon size={18} />,
+      label: "WhatsApp",
+      value: "+237 693 904 197",
+      href: whatsappLink(t.whatsappMessage),
+    },
+    {
       icon: <b>GH</b>,
       label: "GitHub",
       value: "github.com/kjbrown-03",
@@ -488,7 +558,12 @@ function Contact({ t }) {
   ];
 
   return (
-    <section id="contact" className="page contact-page">
+    <section
+      id="contact"
+      className="page contact-page"
+      style={{ "--slide": slide }}
+      data-active={slide === 0}
+    >
       <div className="contact-box">
         <p className="eyebrow">Contact</p>
         <h2>{t.contactTitle}</h2>
@@ -505,6 +580,9 @@ function Contact({ t }) {
         <div className="contact-actions">
           <LiquidButton href="mailto:kaldjobbaptiste03@gmail.com">{t.emailAction}</LiquidButton>
           <LiquidButton href="tel:+237693904197">{t.callAction}</LiquidButton>
+          <LiquidButton href={whatsappLink(t.whatsappMessage)} external>
+            <WhatsAppIcon size={15} /> {t.whatsappAction}
+          </LiquidButton>
         </div>
       </div>
     </section>
@@ -544,27 +622,177 @@ function ProjectsEnvelope({ open, onClose, t }) {
   );
 }
 
+const mobileTabIcons = {
+  home: HomeIcon,
+  about: UserIcon,
+  work: Briefcase,
+  resume: FileText,
+  contact: Mail,
+};
+
+function MobileTabBar({ onNavigate, activeHref, t }) {
+  const tabsRef = useRef(null);
+  const [bubble, setBubble] = useState({ left: 0, width: 44, ready: false });
+
+  const moveBubble = (target) => {
+    const container = tabsRef.current;
+    if (!container || !target) return;
+    const parent = container.getBoundingClientRect();
+    const item = target.getBoundingClientRect();
+    setBubble({
+      left: item.left - parent.left,
+      width: item.width,
+      ready: true,
+    });
+  };
+
+  useEffect(() => {
+    const container = tabsRef.current;
+    const active = container?.querySelector(`a[href="${activeHref}"]`);
+    if (active) moveBubble(active);
+  }, [activeHref]);
+
+  return (
+    <nav
+      className={`mobile-tabbar ${bubble.ready ? "ready" : ""}`}
+      aria-label="Navigation mobile"
+      ref={tabsRef}
+      style={{ "--bubble-left": `${bubble.left}px`, "--bubble-width": `${bubble.width}px` }}
+    >
+      {navItems.map(([key, href]) => {
+        const Icon = mobileTabIcons[key];
+        const active = activeHref === href;
+        return (
+          <a
+            key={key}
+            href={href}
+            className={`mobile-tab ${active ? "active" : ""}`}
+            aria-label={t.nav[key]}
+            onClick={(event) => onNavigate(event, href)}
+          >
+            <Icon size={20} />
+          </a>
+        );
+      })}
+    </nav>
+  );
+}
+
+function ChatWidget({ t }) {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([{ role: "model", text: t.chatGreeting }]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const listRef = useRef(null);
+  const greetingRef = useRef(t.chatGreeting);
+
+  useEffect(() => {
+    if (greetingRef.current === t.chatGreeting) return;
+    greetingRef.current = t.chatGreeting;
+    setMessages((prev) =>
+      prev.length === 1 && prev[0].role === "model" ? [{ role: "model", text: t.chatGreeting }] : prev
+    );
+  }, [t.chatGreeting]);
+
+  useEffect(() => {
+    if (!listRef.current) return;
+    listRef.current.scrollTop = listRef.current.scrollHeight;
+  }, [messages, loading, open]);
+
+  const sendMessage = async () => {
+    const text = input.trim();
+    if (!text || loading) return;
+    const nextMessages = [...messages, { role: "user", text }];
+    setMessages(nextMessages);
+    setInput("");
+    setLoading(true);
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: text,
+          history: nextMessages.slice(0, -1).slice(-8),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.reply) throw new Error(data.error || "chat_failed");
+      setMessages((prev) => [...prev, { role: "model", text: data.reply }]);
+    } catch (error) {
+      setMessages((prev) => [...prev, { role: "model", text: t.chatError, isError: true }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        className={`chat-fab ${open ? "open" : ""}`}
+        onClick={() => setOpen((prev) => !prev)}
+        aria-label={open ? t.close : t.chatTitle}
+      >
+        {open ? <X size={22} /> : <MessageCircle size={22} />}
+      </button>
+      <div className={`chat-panel ${open ? "open" : ""}`} role="dialog" aria-modal="true" aria-label={t.chatTitle}>
+        <div className="chat-header">
+          <span className="chat-avatar">KJB</span>
+          <div>
+            <strong>{t.chatTitle}</strong>
+            <small>{t.chatSubtitle}</small>
+          </div>
+        </div>
+        <div className="chat-messages" ref={listRef}>
+          {messages.map((message, index) => (
+            <div key={index} className={`chat-bubble ${message.role} ${message.isError ? "error" : ""}`}>
+              {message.text}
+            </div>
+          ))}
+          {loading && (
+            <div className="chat-bubble model chat-typing">
+              <span />
+              <span />
+              <span />
+            </div>
+          )}
+        </div>
+        <form
+          className="chat-input-row"
+          onSubmit={(event) => {
+            event.preventDefault();
+            sendMessage();
+          }}
+        >
+          <input
+            type="text"
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            placeholder={t.chatPlaceholder}
+            maxLength={800}
+          />
+          <button type="submit" aria-label={t.chatSend} disabled={loading || !input.trim()}>
+            <Send size={17} />
+          </button>
+        </form>
+      </div>
+    </>
+  );
+}
+
 function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [hideSplash, setHideSplash] = useState(false);
-  const [transition, setTransition] = useState("");
   const [projectsOpen, setProjectsOpen] = useState(false);
   const [activeHref, setActiveHref] = useState("#home");
   const [lang, setLang] = useState("fr");
+  const [activeIndex, setActiveIndex] = useState(0);
   const t = copy[lang];
-  const activeSectionRef = useRef("home");
-  const firstScrollObserveRef = useRef(true);
-  const clickTransitionUntilRef = useRef(0);
-  const scrollTransitionUntilRef = useRef(0);
 
-  useEffect(() => {
-    const hideTimer = window.setTimeout(() => setHideSplash(true), 9800);
-    const removeTimer = window.setTimeout(() => setShowSplash(false), 10700);
-    return () => {
-      window.clearTimeout(hideTimer);
-      window.clearTimeout(removeTimer);
-    };
-  }, []);
+  const handleSplashFinished = () => {
+    setHideSplash(true);
+    window.setTimeout(() => setShowSplash(false), 700);
+  };
 
   useEffect(() => {
     // Désactiver le parallaxe sur les appareils tactiles
@@ -596,89 +824,17 @@ function App() {
     };
   }, []);
 
-  const playTransition = (motion, duration = 1850) => {
-    setTransition("");
-    window.requestAnimationFrame(() => setTransition(motion));
-    window.setTimeout(() => setTransition(""), duration);
-  };
-
-  useEffect(() => {
-    const pages = [...document.querySelectorAll(".page")];
-    const motions = ["flip", "tilt", "lift", "turn", "store"];
-    pages.forEach((page, index) => {
-      page.dataset.motion = motions[index] || "lift";
-    });
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            const sectionId = entry.target.id;
-            const motion = entry.target.dataset.motion || "lift";
-
-            if (firstScrollObserveRef.current) {
-              activeSectionRef.current = sectionId;
-              setActiveHref(`#${sectionId}`);
-              firstScrollObserveRef.current = false;
-              return;
-            }
-
-            if (
-              sectionId !== activeSectionRef.current &&
-              Date.now() > clickTransitionUntilRef.current &&
-              Date.now() > scrollTransitionUntilRef.current
-            ) {
-              activeSectionRef.current = sectionId;
-              setActiveHref(`#${sectionId}`);
-              
-              // Ne pas jouer la transition 3D sur mobile/tablette
-              const isTouch = window.matchMedia("(pointer: coarse)").matches || window.innerWidth <= 900;
-              if (!isTouch) {
-                scrollTransitionUntilRef.current = Date.now() + 2050;
-                playTransition(motion);
-              }
-            }
-          }
-        });
-      },
-      { threshold: 0.12 }
-    );
-
-    pages.forEach((page) => observer.observe(page));
-    return () => observer.disconnect();
-  }, []);
-
-  const handleNavigate = (event, href, motion) => {
+  const handleNavigate = (event, href) => {
     event.preventDefault();
-    const lockDuration = href === "#contact" ? 3200 : 2200;
-    clickTransitionUntilRef.current = Date.now() + lockDuration;
-    scrollTransitionUntilRef.current = Date.now() + lockDuration;
-    activeSectionRef.current = href.replace("#", "");
+    const idx = navItems.findIndex(([, h]) => h === href);
+    if (idx !== -1) setActiveIndex(idx);
     setActiveHref(href);
-    
-    const isTouch = window.matchMedia("(pointer: coarse)").matches || window.innerWidth <= 900;
-    if (!isTouch) {
-      playTransition(motion);
-    }
-    
-    window.setTimeout(() => {
-      document.querySelector(href)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, isTouch ? 50 : 620);
   };
-
-  // Wheel hijack supprimé : scroll natif partout (desktop + mobile)
 
   return (
     <>
-      {showSplash && <SplashScreen hidden={hideSplash} t={t} />}
+      {showSplash && <SplashScreen hidden={hideSplash} onFinish={handleSplashFinished} t={t} />}
       <div className="cursor-aura" aria-hidden="true" />
-      <div className={`transition-stage ${transition ? `active ${transition}` : ""}`} aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
       <Nav
           onNavigate={handleNavigate}
           activeHref={activeHref}
@@ -686,14 +842,16 @@ function App() {
           onToggleLang={() => setLang((current) => (current === "fr" ? "en" : "fr"))}
           t={t}
         />
-      <main className={transition ? `scene-shift ${transition}` : ""}>
-        <Home t={t} />
-        <About t={t} />
-        <Realisations onOpenProjects={() => setProjectsOpen(true)} t={t} />
-        <Resume t={t} />
-        <Contact t={t} />
+      <main>
+        <Home t={t} slide={0 - activeIndex} />
+        <About t={t} slide={1 - activeIndex} />
+        <Realisations onOpenProjects={() => setProjectsOpen(true)} t={t} slide={2 - activeIndex} />
+        <Resume t={t} slide={3 - activeIndex} />
+        <Contact t={t} slide={4 - activeIndex} />
       </main>
+      <MobileTabBar onNavigate={handleNavigate} activeHref={activeHref} t={t} />
       <ProjectsEnvelope open={projectsOpen} onClose={() => setProjectsOpen(false)} t={t} />
+      <ChatWidget t={t} />
     </>
   );
 }
