@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-const ANGLE_STEP = 32; // degrees between adjacent cards — keeps the whole fan on-screen
+const ANGLE_STEP = 38; // degrees between adjacent cards — keeps the whole fan on-screen
 const AUTO_AMPLITUDE = 20; // degrees, how far the fan sways each side of centre
 const AUTO_SPEED = 0.00026; // radians per ms for the sway
 const LERP = 0.035; // smoothing toward the target rotation each frame
@@ -111,6 +111,8 @@ export default function OrbitMenu({ open, cards, onSelect, t }) {
         </div>
         <div className="orbit-dais" aria-hidden="true">
           <span className="orbit-dais-glow" />
+          <span className="orbit-dais-ring orbit-dais-ring-outer" />
+          <span className="orbit-dais-ring orbit-dais-ring-mid" />
           <span className="orbit-dais-base" />
           <span className="orbit-dais-rim" />
         </div>

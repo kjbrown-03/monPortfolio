@@ -828,7 +828,8 @@ function App() {
     setHideSplash(true);
     window.setTimeout(() => {
       setShowSplash(false);
-      setShowHub(true);
+      // Show the real homepage for a few seconds before the 3D hub takes over.
+      window.setTimeout(() => setShowHub(true), 4000);
     }, 700);
   };
 
