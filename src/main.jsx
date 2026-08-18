@@ -237,11 +237,12 @@ function WhatsAppIcon({ size = 18 }) {
   );
 }
 
-function LiquidButton({ href, children, light = false, external = false }) {
+function LiquidButton({ href, children, light = false, external = false, onNavigate }) {
   return (
     <a
       href={href}
-      className={`liquid-button ${light ? "light" : ""}`}
+      onClick={onNavigate ? (event) => onNavigate(event, href) : undefined}
+      className={`liquid-button `}
       target={external ? "_blank" : undefined}
       rel={external ? "noreferrer" : undefined}
     >
@@ -392,7 +393,7 @@ function Nav({ onNavigate, activeHref, lang, onToggleLang, t }) {
   );
 }
 
-function Home({ t, slide = 0 }) {
+function Home({ t, slide = 0, onNavigate }) {
   return (
     <section
       id="home"
@@ -409,14 +410,14 @@ function Home({ t, slide = 0 }) {
         </h1>
         <p className="home-role">{t.heroRole}</p>
         <div className="home-actions">
-          <LiquidButton href="#resume">{t.resumeButton}</LiquidButton>
-          <LiquidButton href="#realisations">{t.workButton}</LiquidButton>
+          <LiquidButton href="#resume" onNavigate={onNavigate}>{t.resumeButton}</LiquidButton>
+          <LiquidButton href="#realisations" onNavigate={onNavigate}>{t.workButton}</LiquidButton>
         </div>
       </div>
       <div className="home-socials">
         <a href="mailto:kaldjobbaptiste03@gmail.com" aria-label="Email"><Mail size={17} /></a>
         <a href="https://github.com/kjbrown-03/" target="_blank" rel="noreferrer" aria-label="GitHub">GH</a>
-        <a href="#contact" aria-label="Contact"><MapPin size={17} /></a>
+        <a href="#contact" onClick={(event) => onNavigate(event, "#contact")} aria-label="Contact"><MapPin size={17} /></a>
       </div>
     </section>
   );
@@ -922,7 +923,7 @@ function App() {
           t={t}
         />
       <main>
-        <Home t={t} slide={0 - activeIndex} />
+        <Home t={t} slide={0 - activeIndex} onNavigate={handleNavigate} />
         <About t={t} slide={1 - activeIndex} />
         <Realisations onOpenProjects={() => setProjectsOpen(true)} t={t} slide={2 - activeIndex} />
         <Resume t={t} slide={3 - activeIndex} />
