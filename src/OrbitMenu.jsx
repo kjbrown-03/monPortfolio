@@ -117,12 +117,7 @@ export default function OrbitMenu({ open, cards, onSelect, onLearnMore, t }) {
       <div className="holo-emitter" aria-hidden="true">
         <span className="emitter-beam" />
         <span className="emitter-glow" />
-        <span className="emitter-base">
-          <i className="emitter-marker m-n" />
-          <i className="emitter-marker m-e" />
-          <i className="emitter-marker m-s" />
-          <i className="emitter-marker m-w" />
-        </span>
+        <span className="emitter-base" />
         <span className="emitter-collar" />
         <span className="emitter-rim" />
         <span className="emitter-dish">
