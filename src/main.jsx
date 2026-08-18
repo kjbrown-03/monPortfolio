@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowUpRight,
@@ -16,18 +16,15 @@ import {
   X,
 } from "lucide-react";
 import "./styles.css";
+import { navItems } from "./navItems.js";
+
+// Three.js is heavy — only fetch it once the splash finishes and the hub is
+// actually about to be shown, not in the initial bundle.
+const DodecahedronMenu = lazy(() => import("./DodecahedronMenu.jsx"));
 
 const homeImage =
   "/images/home-bg.png";
 const portraitImage = "/images/about-whatsapp-cutout.png";
-
-const navItems = [
-  ["home", "#home"],
-  ["about", "#about"],
-  ["work", "#realisations"],
-  ["resume", "#resume"],
-  ["contact", "#contact"],
-];
 
 const copy = {
   fr: {
@@ -72,6 +69,7 @@ const copy = {
     chatPlaceholder: "Ecris ta question...",
     chatError: "Desole, une erreur est survenue. Reessaie dans un instant.",
     chatSend: "Envoyer",
+    hubHint: "Touche ou clique une face pour explorer",
   },
   en: {
     langLabel: "FR",
@@ -115,6 +113,7 @@ const copy = {
     chatPlaceholder: "Type your question...",
     chatError: "Sorry, something went wrong. Please try again in a moment.",
     chatSend: "Send",
+    hubHint: "Tap or click a face to explore",
   },
 };
 
@@ -787,12 +786,37 @@ function App() {
   const [activeHref, setActiveHref] = useState("#home");
   const [lang, setLang] = useState("fr");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showHub, setShowHub] = useState(false);
+  const [hubEverShown, setHubEverShown] = useState(false);
   const t = copy[lang];
+
+  useEffect(() => {
+    if (showHub) setHubEverShown(true);
+  }, [showHub]);
 
   const handleSplashFinished = () => {
     setHideSplash(true);
-    window.setTimeout(() => setShowSplash(false), 700);
+    window.setTimeout(() => {
+      setShowSplash(false);
+      setShowHub(true);
+    }, 700);
   };
+
+  // The 3D hub comes back after 30s of no interaction anywhere on the site.
+  useEffect(() => {
+    let timer;
+    const resetTimer = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => setShowHub(true), 30000);
+    };
+    const events = ["mousemove", "touchstart", "keydown", "click", "wheel"];
+    events.forEach((event) => window.addEventListener(event, resetTimer, { passive: true }));
+    resetTimer();
+    return () => {
+      window.clearTimeout(timer);
+      events.forEach((event) => window.removeEventListener(event, resetTimer));
+    };
+  }, []);
 
   useEffect(() => {
     // Désactiver le parallaxe sur les appareils tactiles
@@ -824,16 +848,30 @@ function App() {
     };
   }, []);
 
-  const handleNavigate = (event, href) => {
-    event.preventDefault();
+  const goToSection = (href) => {
     const idx = navItems.findIndex(([, h]) => h === href);
     if (idx !== -1) setActiveIndex(idx);
     setActiveHref(href);
   };
 
+  const handleNavigate = (event, href) => {
+    event.preventDefault();
+    goToSection(href);
+  };
+
+  const handleHubSelect = (href) => {
+    goToSection(href);
+    setShowHub(false);
+  };
+
   return (
     <>
       {showSplash && <SplashScreen hidden={hideSplash} onFinish={handleSplashFinished} t={t} />}
+      {hubEverShown && (
+        <Suspense fallback={null}>
+          <DodecahedronMenu open={showHub} onSelect={handleHubSelect} t={t} />
+        </Suspense>
+      )}
       <div className="cursor-aura" aria-hidden="true" />
       <Nav
           onNavigate={handleNavigate}
