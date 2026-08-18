@@ -105,7 +105,7 @@ main {
 .splash {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 200;
   display: grid;
   place-items: center;
   align-content: center;
@@ -1653,12 +1653,20 @@ h1 span {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 28px;
+  gap: clamp(10px, 2vh, 22px);
+  padding: clamp(14px, 4vh, 42px) 14px;
+  overflow: hidden;
   background:
-    radial-gradient(circle at center, rgba(121, 170, 255, 0.12), transparent 40rem),
+    radial-gradient(ellipse 62% 42% at 50% 76%, rgba(255, 143, 43, 0.18), transparent 72%),
+    radial-gradient(circle at center, rgba(121, 170, 255, 0.1), transparent 40rem),
     var(--black);
   opacity: 0;
   transition: opacity 0.7s ease;
+}
+
+/* Tant qu'il n'est pas visible il ne doit rien intercepter */
+.hub-overlay:not(.visible) {
+  pointer-events: none;
 }
 
 .hub-overlay.visible {
@@ -1678,6 +1686,7 @@ h1 span {
 
 .orbit-stage {
   position: relative;
+  z-index: 2;
   width: min(640px, 94vw);
   height: min(420px, 54vh);
   /* Short perspective = strong wrap-around distortion on the outer cards,
@@ -1704,10 +1713,9 @@ h1 span {
   top: 50%;
   left: 50%;
   /* A bounded fan (see ANGLE_STEP in OrbitMenu.jsx) instead of a full 360deg
-     ring, so every card stays visible at once. Radius is tuned to about
-     1.23x the card width: enough for neighbours to overlap slightly at the
-     edges (like a fanned deck) without covering each other's text. */
-  --orbit-radius: clamp(128px, 26vw, 196px);
+     ring, so every card stays visible at once. Radius well over the card
+     width so neighbours sit clearly apart, no overlap. */
+  --orbit-radius: clamp(172px, 36vw, 262px);
   width: clamp(104px, 22vw, 158px);
   height: clamp(162px, 34vw, 226px);
   display: flex;
@@ -1721,7 +1729,8 @@ h1 span {
   background: linear-gradient(165deg, rgba(26, 20, 40, 0.95), rgba(6, 7, 10, 0.97));
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.5),
-    0 0 34px rgba(121, 170, 255, 0.1);
+    0 0 34px rgba(121, 170, 255, 0.1),
+    0 16px 34px -14px rgba(255, 143, 43, 0.5);
   color: white;
   text-align: left;
   font: inherit;
@@ -1744,7 +1753,7 @@ h1 span {
   right: 0;
   bottom: 0;
   height: 58%;
-  background: linear-gradient(0deg, rgba(121, 170, 255, 0.22), transparent 85%);
+  background: linear-gradient(0deg, rgba(255, 143, 43, 0.36), rgba(255, 143, 43, 0.1) 44%, transparent 86%);
   pointer-events: none;
 }
 
@@ -1790,111 +1799,6 @@ h1 span {
   -webkit-line-clamp: 2;
   line-clamp: 2;
   -webkit-box-orient: vertical;
-}
-
-/* The glowing dais the ring "sits" on — a crisp bright rim (the actual light
-   source) plus a soft diffuse halo behind it, rather than one blurry blob. */
-/* The dais the fan "floats" above: a dark disc with a glowing rim sitting on
-   top of it, built from stacked flattened ellipses so it reads as an actual
-   object with volume, not just a blurred smear. */
-.orbit-dais {
-  position: absolute;
-  left: 50%;
-  bottom: 2%;
-  width: min(90%, 460px);
-  height: clamp(80px, 16vw, 150px);
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-
-.orbit-dais-glow {
-  position: absolute;
-  inset: -90px -50px -60px;
-  border-radius: 50%;
-  background:
-    radial-gradient(ellipse at center, rgba(121, 170, 255, 0.62), rgba(157, 98, 255, 0.32) 42%, transparent 74%);
-  filter: blur(30px);
-}
-
-.orbit-dais-ring {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 10%;
-  height: 60%;
-  border-radius: 50%;
-  transform: rotateX(74deg);
-}
-
-.orbit-dais-ring-outer {
-  border: 1px solid rgba(121, 170, 255, 0.32);
-}
-
-.orbit-dais-ring-mid {
-  left: 12%;
-  right: 12%;
-  bottom: 18%;
-  height: 48%;
-  border: 1px solid rgba(157, 98, 255, 0.4);
-}
-
-.orbit-dais-base {
-  position: absolute;
-  left: 6%;
-  right: 6%;
-  bottom: 0;
-  height: 56%;
-  border-radius: 50%;
-  background: linear-gradient(180deg, #181c28 0%, #05060a 78%);
-  transform: rotateX(74deg);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
-}
-
-.orbit-dais-rim {
-  position: absolute;
-  left: 2%;
-  right: 2%;
-  bottom: 26%;
-  height: 56%;
-  border-radius: 50%;
-  border: 3px solid rgba(174, 210, 255, 1);
-  background: radial-gradient(ellipse at center, rgba(121, 170, 255, 0.3), transparent 70%);
-  box-shadow:
-    0 0 20px 6px rgba(121, 170, 255, 0.95),
-    0 0 55px 20px rgba(157, 98, 255, 0.6),
-    0 0 110px 40px rgba(121, 170, 255, 0.32),
-    inset 0 0 34px rgba(170, 208, 255, 0.6);
-  transform: rotateX(74deg);
-}
-
-/* A tall soft glow rising from the dais through the whole stage, visible
-   behind/between the cards. */
-.orbit-stage::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 6%;
-  width: min(70%, 380px);
-  height: 70%;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse at 50% 100%, rgba(121, 170, 255, 0.22), transparent 68%);
-  pointer-events: none;
-  z-index: -1;
-}
-
-/* A tall soft glow rising from the platform through the whole stage, visible
-   behind/between the cards as they rotate. */
-.orbit-stage::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 8%;
-  width: min(70%, 380px);
-  height: 70%;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse at 50% 100%, rgba(121, 170, 255, 0.22), transparent 68%);
-  pointer-events: none;
-  z-index: -1;
 }
 
 /* =============================================
@@ -2373,4 +2277,318 @@ h1 span {
     max-width: 100%;
   }
 
+}
+
+/* =============================================
+   EMETTEUR HOLOGRAPHIQUE — la "machine" posee sous
+   les cartes : c'est elle qui projette la lumiere
+   chaude sur les sections (cf. .orbit-card::after)
+   ============================================= */
+.holo-emitter {
+  --emit: #ff8f2b;
+  --emit-soft: #ffb45f;
+  --emit-core: #ffe6bd;
+  position: relative;
+  z-index: 1;
+  width: min(520px, 90vw);
+  height: clamp(112px, 22vh, 178px);
+  /* Le socle se glisse SOUS l'eventail de cartes au lieu de s'empiler dessous */
+  margin-top: clamp(-104px, -12vh, -66px);
+  pointer-events: none;
+}
+
+/* Toutes les pieces sont des ellipses empilees et centrees */
+.holo-emitter > * {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* --- Faisceau volumetrique qui remonte vers les cartes --- */
+.emitter-beam {
+  bottom: 44%;
+  width: 84%;
+  height: clamp(160px, 32vh, 320px);
+  background: linear-gradient(
+    to top,
+    rgba(255, 143, 43, 0.62),
+    rgba(255, 143, 43, 0.2) 46%,
+    transparent 90%
+  );
+  clip-path: polygon(37% 100%, 63% 100%, 100% 0, 0 0);
+  filter: blur(13px);
+  mix-blend-mode: screen;
+  animation: emitterBeam 4.4s ease-in-out infinite;
+}
+
+/* --- Halo diffus autour du socle --- */
+.emitter-glow {
+  bottom: 12%;
+  width: 132%;
+  height: clamp(150px, 30vh, 260px);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 143, 43, 0.4),
+    rgba(255, 110, 0, 0.15) 40%,
+    transparent 72%
+  );
+  filter: blur(8px);
+  mix-blend-mode: screen;
+  animation: emitterHalo 3.8s ease-in-out infinite;
+}
+
+/* --- Socle exterieur segmente --- */
+.emitter-base {
+  bottom: 0;
+  width: 100%;
+  height: clamp(54px, 11vw, 88px);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 163, 66, 0.55);
+  background:
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(255, 255, 255, 0.14) 0deg 3deg,
+      transparent 3deg 15deg
+    ),
+    radial-gradient(ellipse at 50% 38%, rgba(255, 143, 43, 0.3), transparent 62%),
+    linear-gradient(180deg, #221b16, #0b0908 72%);
+  box-shadow:
+    0 26px 60px rgba(0, 0, 0, 0.75),
+    0 0 26px rgba(255, 143, 43, 0.45),
+    0 0 70px rgba(255, 143, 43, 0.22),
+    inset 0 10px 24px rgba(0, 0, 0, 0.72),
+    inset 0 -2px 0 rgba(255, 163, 66, 0.35);
+}
+
+/* Creux interieur : le socle se lit comme un anneau, pas un disque plein */
+.emitter-base::before {
+  content: "";
+  position: absolute;
+  inset: 17% 21%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 143, 43, 0.3);
+  background: radial-gradient(ellipse at center, rgba(255, 143, 43, 0.25), rgba(7, 6, 5, 0.96) 72%);
+}
+
+/* --- Reperes en losange sur l'anneau exterieur --- */
+.emitter-marker {
+  position: absolute;
+  width: clamp(7px, 1.5vw, 11px);
+  height: clamp(7px, 1.5vw, 11px);
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--emit-core), var(--emit));
+  box-shadow:
+    0 0 12px rgba(255, 143, 43, 0.95),
+    0 0 28px rgba(255, 143, 43, 0.55);
+  animation: emitterMarker 2.8s ease-in-out infinite;
+}
+
+.emitter-marker.m-n {
+  top: 8%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.emitter-marker.m-s {
+  bottom: 6%;
+  left: 50%;
+  transform: translate(-50%, 50%) rotate(45deg);
+  animation-delay: 1.4s;
+}
+
+.emitter-marker.m-w {
+  top: 50%;
+  left: 3%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  animation-delay: 0.7s;
+}
+
+.emitter-marker.m-e {
+  top: 50%;
+  right: 3%;
+  transform: translate(50%, -50%) rotate(45deg);
+  animation-delay: 2.1s;
+}
+
+/* --- Collier sombre entre le socle et la vasque --- */
+.emitter-collar {
+  bottom: 27%;
+  width: 63%;
+  height: clamp(38px, 7.6vw, 62px);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 163, 66, 0.5);
+  background: linear-gradient(180deg, #2a211a, #100c0a 58%, #070605);
+  box-shadow:
+    0 18px 36px rgba(0, 0, 0, 0.78),
+    0 0 22px rgba(255, 143, 43, 0.3),
+    inset 0 -12px 24px rgba(255, 143, 43, 0.22);
+}
+
+/* --- Anneau incandescent qui ceint la vasque --- */
+.emitter-rim {
+  bottom: 43%;
+  width: 51%;
+  height: clamp(30px, 6vw, 48px);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 163, 66, 0.78);
+  background: radial-gradient(ellipse at center, rgba(255, 143, 43, 0.24), transparent 70%);
+  animation: emitterRim 3.2s ease-in-out infinite;
+}
+
+/* --- Vasque : la source de lumiere --- */
+.emitter-dish {
+  bottom: 46%;
+  width: 41%;
+  height: clamp(24px, 4.8vw, 38px);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 50% 56%,
+    var(--emit-core),
+    var(--emit) 40%,
+    rgba(190, 70, 0, 0.9) 76%,
+    rgba(55, 18, 0, 0.92)
+  );
+  box-shadow:
+    0 0 26px rgba(255, 143, 43, 0.9),
+    0 0 62px rgba(255, 120, 20, 0.42),
+    inset 0 -4px 12px rgba(0, 0, 0, 0.45);
+}
+
+/* Coeur pulsant */
+.emitter-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48%;
+  height: 48%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff9ef, rgba(255, 214, 150, 0.55) 55%, transparent 76%);
+  filter: blur(2px);
+  animation: emitterCore 2.4s ease-in-out infinite;
+}
+
+/* Onde d'energie qui s'echappe de la vasque */
+.emitter-scan {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 180, 95, 0.85);
+  animation: emitterScan 3s ease-out infinite;
+}
+
+@keyframes emitterBeam {
+  0%, 100% { opacity: 0.68; }
+  50% { opacity: 1; }
+}
+
+@keyframes emitterHalo {
+  0%, 100% { opacity: 0.75; transform: translateX(-50%) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.07); }
+}
+
+@keyframes emitterRim {
+  0%, 100% {
+    box-shadow: 0 0 22px rgba(255, 143, 43, 0.5), inset 0 0 20px rgba(255, 143, 43, 0.32);
+  }
+  50% {
+    box-shadow: 0 0 42px rgba(255, 143, 43, 0.85), inset 0 0 34px rgba(255, 143, 43, 0.58);
+  }
+}
+
+@keyframes emitterCore {
+  0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(0.88); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.16); }
+}
+
+@keyframes emitterScan {
+  0% { opacity: 0.85; transform: translate(-50%, -50%) scale(0.6); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2.7); }
+}
+
+@keyframes emitterMarker {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+
+/* --- Bouton "Learn More" pose devant l'emetteur --- */
+.hub-learn {
+  position: relative;
+  z-index: 3;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: clamp(11px, 1.7vw, 15px) clamp(28px, 4.6vw, 44px);
+  overflow: hidden;
+  background: linear-gradient(180deg, #ffb659, #ff8f2b 46%, #ef6b05);
+  color: #fff;
+  font: inherit;
+  font-size: clamp(0.86rem, 1.9vw, 1rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(120, 45, 0, 0.45);
+  cursor: pointer;
+  box-shadow:
+    0 14px 34px rgba(255, 120, 20, 0.45),
+    0 0 64px rgba(255, 143, 43, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.hub-learn:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 20px 46px rgba(255, 120, 20, 0.6),
+    0 0 90px rgba(255, 143, 43, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62);
+}
+
+.hub-learn:active {
+  transform: translateY(0);
+}
+
+.hub-learn span {
+  position: relative;
+  z-index: 1;
+}
+
+.hub-learn-shine {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, 0.5) 50%, transparent 68%);
+  transform: translateX(-130%);
+  animation: hubLearnShine 3.6s ease-in-out infinite;
+}
+
+@keyframes hubLearnShine {
+  0%, 62% { transform: translateX(-130%); }
+  100% { transform: translateX(130%); }
+}
+
+@media (max-width: 640px) {
+  .holo-emitter {
+    width: 96vw;
+    height: clamp(88px, 17vh, 130px);
+    margin-top: clamp(-76px, -9vh, -48px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emitter-beam,
+  .emitter-glow,
+  .emitter-rim,
+  .emitter-core,
+  .emitter-scan,
+  .emitter-marker,
+  .hub-learn-shine {
+    animation: none;
+  }
+
+  .emitter-scan {
+    opacity: 0;
+  }
 }

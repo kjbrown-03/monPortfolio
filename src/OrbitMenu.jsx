@@ -7,7 +7,7 @@ const LERP = 0.035; // smoothing toward the target rotation each frame
 const DRAG_SENSITIVITY = 0.4; // degrees per px dragged
 const RESUME_AUTO_DELAY = 2500; // ms after releasing a drag before it sways again
 
-export default function OrbitMenu({ open, cards, onSelect, t }) {
+export default function OrbitMenu({ open, cards, onSelect, onLearnMore, t }) {
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(false);
   const [rotation, setRotation] = useState(0);
@@ -109,14 +109,33 @@ export default function OrbitMenu({ open, cards, onSelect, t }) {
             </button>
           ))}
         </div>
-        <div className="orbit-dais" aria-hidden="true">
-          <span className="orbit-dais-glow" />
-          <span className="orbit-dais-ring orbit-dais-ring-outer" />
-          <span className="orbit-dais-ring orbit-dais-ring-mid" />
-          <span className="orbit-dais-base" />
-          <span className="orbit-dais-rim" />
-        </div>
       </div>
+
+      {/* ---- EMETTEUR HOLOGRAPHIQUE ----
+         La "machine" posee sous les cartes : socle segmente, collier sombre,
+         vasque incandescente et faisceau qui remonte eclairer les sections. */}
+      <div className="holo-emitter" aria-hidden="true">
+        <span className="emitter-beam" />
+        <span className="emitter-glow" />
+        <span className="emitter-base">
+          <i className="emitter-marker m-n" />
+          <i className="emitter-marker m-e" />
+          <i className="emitter-marker m-s" />
+          <i className="emitter-marker m-w" />
+        </span>
+        <span className="emitter-collar" />
+        <span className="emitter-rim" />
+        <span className="emitter-dish">
+          <i className="emitter-scan" />
+          <i className="emitter-core" />
+        </span>
+      </div>
+
+      <button type="button" className="hub-learn" onClick={onLearnMore}>
+        <span className="hub-learn-shine" />
+        <span>{t.hubLearn}</span>
+      </button>
+
       <p className="hub-hint">{t.hubHint}</p>
     </div>
   );

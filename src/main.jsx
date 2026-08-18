@@ -67,6 +67,7 @@ const copy = {
     chatError: "Desole, une erreur est survenue. Reessaie dans un instant.",
     chatSend: "Envoyer",
     hubHint: "Touche ou clique une face pour explorer",
+    hubLearn: "Learn More",
   },
   en: {
     langLabel: "FR",
@@ -111,6 +112,7 @@ const copy = {
     chatError: "Sorry, something went wrong. Please try again in a moment.",
     chatSend: "Send",
     hubHint: "Tap or click a face to explore",
+    hubLearn: "Learn More",
   },
 };
 
@@ -783,7 +785,9 @@ function App() {
   const [activeHref, setActiveHref] = useState("#home");
   const [lang, setLang] = useState("fr");
   const [activeIndex, setActiveIndex] = useState(0);
-  const [showHub, setShowHub] = useState(false);
+  // Le hub est monte des le depart, DERRIERE le splash : quand le splash
+  // s'efface il decouvre directement le hub, sans flash de la page d'accueil.
+  const [showHub, setShowHub] = useState(true);
   const t = copy[lang];
 
   const hubCards = [
@@ -826,11 +830,7 @@ function App() {
 
   const handleSplashFinished = () => {
     setHideSplash(true);
-    window.setTimeout(() => {
-      setShowSplash(false);
-      // Show the real homepage for a few seconds before the 3D hub takes over.
-      window.setTimeout(() => setShowHub(true), 4000);
-    }, 700);
+    window.setTimeout(() => setShowSplash(false), 700);
   };
 
   // The 3D hub comes back after 30s of no interaction anywhere on the site.
@@ -895,10 +895,24 @@ function App() {
     setShowHub(false);
   };
 
+  // "Learn More" sous l'emetteur : ferme le hub, va sur Realisations et
+  // ouvre directement l'enveloppe qui contient TOUS les projets.
+  const handleHubLearnMore = () => {
+    goToSection("#realisations");
+    setShowHub(false);
+    window.setTimeout(() => setProjectsOpen(true), 450);
+  };
+
   return (
     <>
       {showSplash && <SplashScreen hidden={hideSplash} onFinish={handleSplashFinished} t={t} />}
-      <OrbitMenu open={showHub} cards={hubCards} onSelect={handleHubSelect} t={t} />
+      <OrbitMenu
+        open={showHub}
+        cards={hubCards}
+        onSelect={handleHubSelect}
+        onLearnMore={handleHubLearnMore}
+        t={t}
+      />
       <div className="cursor-aura" aria-hidden="true" />
       <Nav
           onNavigate={handleNavigate}
