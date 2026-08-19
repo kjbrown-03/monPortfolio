@@ -1,5 +1,10 @@
 const MODEL = "gemini-3.6-flash";
 const MAX_MESSAGE_LENGTH = 800;
+// gemini-3.6-flash raisonne avant de repondre et ces tokens de reflexion sont
+// decomptes de maxOutputTokens. Sans thinkingLevel bas, la reflexion mangeait
+// jusqua 791 des 1024 tokens : la reponse revenait tronquee, donc vide.
+const THINKING_LEVEL = "low";
+const MAX_OUTPUT_TOKENS = 2048;
 const MAX_HISTORY_TURNS = 8;
 
 const SYSTEM_CONTEXT = `Tu es l'assistant IA du portfolio de Kaldjob Jean Baptiste (surnomme KJB).
@@ -80,26 +85,40 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           system_instruction: { parts: [{ text: SYSTEM_CONTEXT }] },
           contents,
-          generationConfig: { maxOutputTokens: 1024, temperature: 0.6 },
+          generationConfig: {
+            maxOutputTokens: MAX_OUTPUT_TOKENS,
+            temperature: 0.6,
+            thinkingConfig: { thinkingLevel: THINKING_LEVEL },
+          },
         }),
       }
     );
 
     if (!response.ok) {
+      // La cause reelle ne doit pas rester invisible : sans ce log, toute panne
+      // (quota, cle revoquee, modele retire) se lit pareil cote navigateur.
+      console.error("Gemini HTTP", response.status, (await response.text()).slice(0, 500));
       res.status(502).json({ error: "ai_request_failed" });
       return;
     }
 
     const data = await response.json();
-    const reply = data?.candidates?.[0]?.content?.parts?.map((part) => part.text).join("").trim();
+    const candidate = data?.candidates?.[0];
+    const reply = candidate?.content?.parts?.map((part) => part.text).join("").trim();
 
     if (!reply) {
+      console.error("Gemini reponse vide", JSON.stringify({
+        finishReason: candidate?.finishReason,
+        usage: data?.usageMetadata,
+        promptFeedback: data?.promptFeedback,
+      }));
       res.status(502).json({ error: "empty_reply" });
       return;
     }
 
     res.status(200).json({ reply });
-  } catch {
+  } catch (error) {
+    console.error("Appel Gemini echoue", error);
     res.status(500).json({ error: "ai_request_failed" });
   }
 }

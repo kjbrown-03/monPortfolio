@@ -21,6 +21,8 @@ import OrbitMenu from "./OrbitMenu.jsx";
 
 const homeImage =
   "/images/home-bg.png";
+const CV_FILE = "/cv-kaldjob-jean-baptiste.pdf";
+const CV_DOWNLOAD_NAME = "CV-Kaldjob-Jean-Baptiste.pdf";
 const portraitImage = "/images/about-whatsapp-cutout.png";
 
 const copy = {
@@ -65,9 +67,16 @@ const copy = {
       "Bonjour ! Je suis l'assistant IA de Jean Baptiste. Pose-moi une question sur son parcours, ses competences ou ses projets.",
     chatPlaceholder: "Ecris ta question...",
     chatError: "Desole, une erreur est survenue. Reessaie dans un instant.",
+    chatTimeout: "L'assistant met trop de temps a repondre. Reessaie dans un instant.",
+    chatUnconfigured: "L'assistant n'est pas encore configure sur ce serveur.",
     chatSend: "Envoyer",
     hubHint: "Touche ou clique une face pour explorer",
     hubLearn: "Learn More",
+    cvTitle: "Mon CV",
+    cvSubtitle: "Developpeur Full Stack - Douala, Cameroun",
+    cvDownload: "Telecharger le CV",
+    cvOpenTab: "Ouvrir dans un onglet",
+    cvFallback: "Ton navigateur n'affiche pas les PDF ? Telecharge le CV ou ouvre-le dans un onglet.",
   },
   en: {
     langLabel: "FR",
@@ -110,9 +119,16 @@ const copy = {
       "Hi! I'm Jean Baptiste's AI assistant. Ask me about his background, skills or projects.",
     chatPlaceholder: "Type your question...",
     chatError: "Sorry, something went wrong. Please try again in a moment.",
+    chatTimeout: "The assistant is taking too long to answer. Please try again in a moment.",
+    chatUnconfigured: "The assistant is not configured on this server yet.",
     chatSend: "Send",
     hubHint: "Tap or click a face to explore",
     hubLearn: "Learn More",
+    cvTitle: "My resume",
+    cvSubtitle: "Full Stack Developer - Douala, Cameroon",
+    cvDownload: "Download resume",
+    cvOpenTab: "Open in a new tab",
+    cvFallback: "Your browser can't display PDFs? Download the resume or open it in a new tab.",
   },
 };
 
@@ -160,6 +176,10 @@ const skills = [
   ["MySQL", 82],
   ["Supabase", 80],
 ];
+
+// Au-dela, c'est la fonction serverless qui ne repondra plus : mieux vaut un
+// message clair qu'un chat bloque sur ses trois points.
+const CHAT_TIMEOUT_MS = 45000;
 
 const NAME_TRAVEL_MS = 1700;
 const BAR_FILL_MS = 2400;
@@ -393,7 +413,7 @@ function Nav({ onNavigate, activeHref, lang, onToggleLang, t }) {
   );
 }
 
-function Home({ t, slide = 0, onNavigate }) {
+function Home({ t, slide = 0, onNavigate, onOpenResume }) {
   return (
     <section
       id="home"
@@ -410,7 +430,10 @@ function Home({ t, slide = 0, onNavigate }) {
         </h1>
         <p className="home-role">{t.heroRole}</p>
         <div className="home-actions">
-          <LiquidButton href="#resume" onNavigate={onNavigate}>{t.resumeButton}</LiquidButton>
+          <button type="button" className="liquid-button" onClick={onOpenResume}>
+            <span className="shine" />
+            <span>{t.resumeButton} <FileText size={16} /></span>
+          </button>
           <LiquidButton href="#realisations" onNavigate={onNavigate}>{t.workButton}</LiquidButton>
         </div>
       </div>
@@ -621,6 +644,59 @@ function ProjectsEnvelope({ open, onClose, t }) {
   );
 }
 
+function ResumeViewer({ open, onClose, t }) {
+  // Echap pour fermer, et on bloque le scroll du fond tant que le CV est ouvert.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [open, onClose]);
+
+  return (
+    <div className={`cv-modal ${open ? "open" : ""}`} aria-hidden={!open}>
+      <div className="cv-backdrop" onClick={onClose} />
+      <div className="cv-panel" role="dialog" aria-modal="true" aria-label={t.cvTitle}>
+        <header className="cv-head">
+          <div>
+            <strong>{t.cvTitle}</strong>
+            <small>{t.cvSubtitle}</small>
+          </div>
+          <button type="button" className="cv-close" onClick={onClose} aria-label={t.close}>
+            <X size={18} />
+          </button>
+        </header>
+
+        <div className="cv-frame">
+          {/* Monte seulement a l'ouverture : inutile de charger 140 ko de PDF
+              sur chaque visite pour un panneau que personne n'ouvrira peut-etre. */}
+          {open && <iframe src={`${CV_FILE}#view=FitH`} title={t.cvTitle} />}
+          <p className="cv-fallback">{t.cvFallback}</p>
+        </div>
+
+        <footer className="cv-actions">
+          {/* download force l'enregistrement ; l'onglet sert de secours mobile,
+              ou l'iframe PDF est souvent ignoree. */}
+          <a className="liquid-button cv-download" href={CV_FILE} download={CV_DOWNLOAD_NAME}>
+            <span className="shine" />
+            <span><FileText size={16} /> {t.cvDownload}</span>
+          </a>
+          <a className="cv-tab" href={CV_FILE} target="_blank" rel="noreferrer">
+            {t.cvOpenTab} <ArrowUpRight size={15} />
+          </a>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
 const mobileTabIcons = {
   home: HomeIcon,
   about: UserIcon,
@@ -705,21 +781,35 @@ function ChatWidget({ t }) {
     setMessages(nextMessages);
     setInput("");
     setLoading(true);
+    // Sans plafond, une fonction serverless qui pedale laisse le chat tourner
+    // indefiniment : on coupe avant, et on le dit clairement.
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), CHAT_TIMEOUT_MS);
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           message: text,
           history: nextMessages.slice(0, -1).slice(-8),
         }),
       });
-      const data = await response.json();
+      // Un 504 de Vercel renvoie du HTML, pas du JSON : ne pas planter dessus.
+      const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.reply) throw new Error(data.error || "chat_failed");
       setMessages((prev) => [...prev, { role: "model", text: data.reply }]);
     } catch (error) {
-      setMessages((prev) => [...prev, { role: "model", text: t.chatError, isError: true }]);
+      const reason = error?.name === "AbortError" ? "chat_timeout" : error?.message;
+      const label =
+        reason === "ai_not_configured"
+          ? t.chatUnconfigured
+          : reason === "chat_timeout"
+            ? t.chatTimeout
+            : t.chatError;
+      setMessages((prev) => [...prev, { role: "model", text: label, isError: true }]);
     } finally {
+      window.clearTimeout(timeout);
       setLoading(false);
     }
   };
@@ -783,6 +873,7 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [hideSplash, setHideSplash] = useState(false);
   const [projectsOpen, setProjectsOpen] = useState(false);
+  const [resumeOpen, setResumeOpen] = useState(false);
   const [activeHref, setActiveHref] = useState("#home");
   const [lang, setLang] = useState("fr");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -923,7 +1014,12 @@ function App() {
           t={t}
         />
       <main>
-        <Home t={t} slide={0 - activeIndex} onNavigate={handleNavigate} />
+        <Home
+          t={t}
+          slide={0 - activeIndex}
+          onNavigate={handleNavigate}
+          onOpenResume={() => setResumeOpen(true)}
+        />
         <About t={t} slide={1 - activeIndex} />
         <Realisations onOpenProjects={() => setProjectsOpen(true)} t={t} slide={2 - activeIndex} />
         <Resume t={t} slide={3 - activeIndex} />
@@ -931,6 +1027,7 @@ function App() {
       </main>
       <MobileTabBar onNavigate={handleNavigate} activeHref={activeHref} t={t} />
       <ProjectsEnvelope open={projectsOpen} onClose={() => setProjectsOpen(false)} t={t} />
+      <ResumeViewer open={resumeOpen} onClose={() => setResumeOpen(false)} t={t} />
       <ChatWidget t={t} />
     </>
   );
