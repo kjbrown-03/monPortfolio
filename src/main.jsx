@@ -23,7 +23,7 @@ const homeImage =
   "/images/home-bg.png";
 const CV_FILE = "/cv-kaldjob-jean-baptiste.pdf";
 const CV_DOWNLOAD_NAME = "CV-Kaldjob-Jean-Baptiste.pdf";
-const portraitImage = "/images/about-whatsapp-cutout.png";
+const portraitImage = "/images/about-portrait-studio.png";
 
 const copy = {
   fr: {
